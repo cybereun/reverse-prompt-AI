@@ -1,15 +1,16 @@
 import React, { useState, useRef } from 'react';
-import { AnalysisMode, HistoryItem } from '../types';
+import { AIProvider, AnalysisMode, HistoryItem } from '../types';
 import { analyzeImage, enhancePrompt } from '../services/geminiService';
 import { Upload, Camera, Zap, Copy, RotateCcw, ArrowRight, Wand2, Loader2, Image as ImageIcon, FileText } from 'lucide-react';
 
 interface AnalyzerProps {
+  provider: AIProvider;
   onPromptGenerated: (prompt: string, sourceImage?: string | null) => void;
   onSaveToHistory: (item: HistoryItem) => void;
   onApiKeyRequired?: () => void;
 }
 
-const Analyzer: React.FC<AnalyzerProps> = ({ onPromptGenerated, onSaveToHistory, onApiKeyRequired }) => {
+const Analyzer: React.FC<AnalyzerProps> = ({ provider, onPromptGenerated, onSaveToHistory, onApiKeyRequired }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -71,7 +72,7 @@ const Analyzer: React.FC<AnalyzerProps> = ({ onPromptGenerated, onSaveToHistory,
     if (selectedFile) {
       setIsAnalyzing(true);
       try {
-        const prompt = await analyzeImage(selectedFile, mode, additionalInput);
+        const prompt = await analyzeImage(selectedFile, mode, additionalInput, provider);
         setResultPrompt(prompt);
         // Auto-save to history
         if (previewUrl) {
@@ -100,7 +101,7 @@ const Analyzer: React.FC<AnalyzerProps> = ({ onPromptGenerated, onSaveToHistory,
     if (!resultPrompt) return;
     setIsEnhancing(true);
     try {
-      const enhanced = await enhancePrompt(resultPrompt);
+      const enhanced = await enhancePrompt(resultPrompt, provider);
       setResultPrompt(enhanced);
     } catch (err: any) {
       if (err?.message === 'API_KEY_REQUIRED' || err?.message?.includes('API_KEY_REQUIRED')) {

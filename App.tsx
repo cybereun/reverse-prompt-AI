@@ -4,9 +4,9 @@ import Generator from './components/Generator';
 import History from './components/History';
 import ApiKeyModal from './components/ApiKeyModal';
 import { AppIcon } from './components/AppIcon';
-import { HistoryItem } from './types';
-import { Camera, Zap, Layers, FolderOpen, Key } from 'lucide-react';
-import { hasStoredApiKey } from './services/apiKeyStorage';
+import { AIProvider, HistoryItem } from './types';
+import { Camera, Layers, FolderOpen, Key } from 'lucide-react';
+import { getSelectedProvider, hasStoredApiKey, setSelectedProvider } from './services/apiKeyStorage';
 
 type Tab = 'analyze' | 'generate' | 'history';
 
@@ -15,17 +15,23 @@ function App() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [sharedPrompt, setSharedPrompt] = useState<string>("");
   const [sharedSourceImage, setSharedSourceImage] = useState<string | null>(null);
+  const [provider, setProvider] = useState<AIProvider>(() => getSelectedProvider());
   
   // API Key Modal State
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
   const [isKeySetLocally, setIsKeySetLocally] = useState(false);
 
   useEffect(() => {
-    setIsKeySetLocally(hasStoredApiKey());
-  }, []);
+    setIsKeySetLocally(hasStoredApiKey(provider));
+  }, [provider]);
 
   const handleKeyUpdated = () => {
-    setIsKeySetLocally(hasStoredApiKey());
+    setIsKeySetLocally(hasStoredApiKey(provider));
+  };
+
+  const handleProviderChange = (nextProvider: AIProvider) => {
+    setProvider(nextProvider);
+    setSelectedProvider(nextProvider);
   };
 
   const addToHistory = (item: HistoryItem) => {
@@ -49,8 +55,13 @@ function App() {
       {/* Navbar */}
       <nav className="border-b border-zinc-800 bg-zinc-950/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 gap-2">
-            <div />
+          <div className="flex items-center justify-between h-16 gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <AppIcon className="w-8 h-8 sm:w-9 sm:h-9 flex-shrink-0" />
+              <span className="text-xs sm:text-sm lg:text-base font-bold text-white whitespace-nowrap">
+                역프롬프트 이미지 생성 AI
+              </span>
+            </div>
             
             <div className="flex items-center gap-2">
               {/* Navigation Tabs */}
@@ -86,9 +97,9 @@ function App() {
                     ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/40'
                     : 'bg-zinc-800/80 border-zinc-700 text-zinc-300 hover:bg-zinc-800'
                 }`}
-                title="Gemini API 키 설정 (로컬 저장)"
+                title={`${provider === 'openai' ? 'OpenAI' : 'Gemini'} API 키 설정 (로컬 저장)`}
               >
-                <Key className="w-3.5 h-3.5 text-blue-400" />
+                <Key className={`w-3.5 h-3.5 ${provider === 'openai' ? 'text-emerald-400' : 'text-blue-400'}`} />
                 <span className="hidden md:inline">API 키 설정</span>
                 <span className={`w-2 h-2 rounded-full ${isKeySetLocally ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'}`} />
               </button>
@@ -101,14 +112,17 @@ function App() {
       <main className="w-full px-4 sm:px-6 lg:px-8 py-6">
         <div className="min-h-[calc(100vh-8rem)]">
           <div style={{ display: activeTab === 'analyze' ? 'block' : 'none' }} className="animate-fade-in">
-            <div className="mb-6 flex items-center gap-3">
-              <AppIcon className="w-10 h-10 flex-shrink-0" />
+            <div className="mb-5">
               <div>
-                <h1 className="text-3xl font-bold text-white">이미지 분석 스튜디오</h1>
-                <p className="text-zinc-400 text-sm mt-0.5">참조 이미지에서 전문가급 프롬프트와 기술적 사양을 추출합니다.</p>
+                <h1 className="text-xl font-bold text-white flex items-center gap-2">
+                  <span aria-hidden="true">🔍</span>
+                  이미지 분석
+                </h1>
+                <p className="text-zinc-400 text-xs mt-1">참조 이미지에서 전문가급 프롬프트와 기술적 사양을 추출합니다.</p>
               </div>
             </div>
             <Analyzer 
+              provider={provider}
               onPromptGenerated={handlePromptGenerated} 
               onSaveToHistory={addToHistory}
               onApiKeyRequired={() => setIsApiKeyModalOpen(true)}
@@ -116,14 +130,17 @@ function App() {
           </div>
 
           <div style={{ display: activeTab === 'generate' ? 'block' : 'none' }} className="animate-fade-in">
-             <div className="mb-6 flex items-center gap-3">
-               <AppIcon className="w-10 h-10 flex-shrink-0" />
-               <div>
-                 <h1 className="text-3xl font-bold text-white">역프롬프트 이미지 생성 AI</h1>
-                 <p className="text-zinc-400 text-sm mt-0.5">최적화된 프롬프트로 놀라운 예술 작품을 만들어보세요.</p>
-               </div>
-             </div>
+            <div className="mb-5">
+              <div>
+                <h1 className="text-xl font-bold text-white flex items-center gap-2">
+                  <span aria-hidden="true">🎨</span>
+                  이미지 생성
+                </h1>
+                <p className="text-zinc-400 text-xs mt-1">최적화된 프롬프트로 놀라운 예술 작품을 만들어보세요.</p>
+              </div>
+            </div>
             <Generator 
+              provider={provider}
               initialPrompt={sharedPrompt} 
               initialSourceImage={sharedSourceImage}
               onSaveToHistory={addToHistory}
@@ -132,13 +149,15 @@ function App() {
           </div>
 
           <div style={{ display: activeTab === 'history' ? 'block' : 'none' }} className="animate-fade-in">
-             <div className="mb-6 flex items-center gap-3">
-                <AppIcon className="w-10 h-10 flex-shrink-0" />
-                <div>
-                  <h1 className="text-3xl font-bold text-white">기록 및 갤러리</h1>
-                  <p className="text-zinc-400 text-sm mt-0.5">과거 분석 및 생성 기록을 확인하세요.</p>
-                </div>
+            <div className="mb-5">
+              <div>
+                <h1 className="text-xl font-bold text-white flex items-center gap-2">
+                  <span aria-hidden="true">📚</span>
+                  히스토리
+                </h1>
+                <p className="text-zinc-400 text-xs mt-1">과거 분석 및 생성 기록을 확인하세요.</p>
               </div>
+            </div>
             <History items={history} onSelectPrompt={handleHistoryPromptSelect} />
           </div>
         </div>
@@ -147,6 +166,8 @@ function App() {
       {/* API Key Modal */}
       <ApiKeyModal
         isOpen={isApiKeyModalOpen}
+        initialProvider={provider}
+        onProviderChange={handleProviderChange}
         onClose={() => setIsApiKeyModalOpen(false)}
         onKeyUpdated={handleKeyUpdated}
       />
@@ -154,7 +175,7 @@ function App() {
       {/* Footer */}
       <footer className="border-t border-zinc-900 py-6 text-center">
         <p className="text-xs text-zinc-600">
-          Powered by Google Gemini Models • Server-Side API Proxy for Security
+          Powered by Google Gemini & OpenAI • Server-Side API Proxy
         </p>
       </footer>
     </div>

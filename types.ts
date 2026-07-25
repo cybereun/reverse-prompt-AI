@@ -4,6 +4,8 @@ export enum AnalysisMode {
   TECHNICAL = 'TECHNICAL'
 }
 
+export type AIProvider = 'gemini' | 'openai';
+
 export interface HistoryItem {
   id: string;
   timestamp: number;

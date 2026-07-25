@@ -3,7 +3,8 @@ import path from "path";
 import cors from "cors";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
-import { AnalysisMode, AspectRatio } from "./types";
+import OpenAI, { toFile } from "openai";
+import { AIProvider, AnalysisMode, AspectRatio } from "./types";
 
 async function startServer() {
   const app = express();
@@ -13,11 +14,20 @@ async function startServer() {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-  // Helper to retrieve API Key from request header or server env
-  const getApiKey = (req: express.Request): string | null => {
-    const headerKey = req.headers["x-gemini-api-key"] || req.headers["x-api-key"];
+  const getProvider = (req: express.Request): AIProvider =>
+    req.body?.provider === "openai" ? "openai" : "gemini";
+
+  // User OpenAI keys are request-only and are never read from or written to server storage.
+  const getApiKey = (req: express.Request, provider: AIProvider): string | null => {
+    const headerKey =
+      provider === "openai"
+        ? req.headers["x-openai-api-key"]
+        : req.headers["x-gemini-api-key"] || req.headers["x-api-key"];
     if (typeof headerKey === "string" && headerKey.trim().length > 0) {
       return headerKey.trim();
+    }
+    if (provider === "openai") {
+      return null;
     }
     if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim().length > 0) {
       return process.env.GEMINI_API_KEY.trim();
@@ -26,6 +36,27 @@ async function startServer() {
       return process.env.API_KEY.trim();
     }
     return null;
+  };
+
+  const openAIImageSize = (aspectRatio: AspectRatio): string => {
+    const sizes: Record<AspectRatio, string> = {
+      "16:9": "1536x864",
+      "9:16": "864x1536",
+      "1:1": "1024x1024",
+      "4:3": "1344x1008",
+      "3:4": "1008x1344",
+      "21:9": "1536x672"
+    };
+    return sizes[aspectRatio] || sizes["16:9"];
+  };
+
+  const parseDataUrl = (imageBase64: string, fallbackMimeType = "image/png") => {
+    if (!imageBase64.includes(",")) {
+      return { data: imageBase64, mimeType: fallbackMimeType };
+    }
+    const [metadata, data] = imageBase64.split(",", 2);
+    const mimeType = metadata.match(/data:(.*?);/)?.[1] || fallbackMimeType;
+    return { data, mimeType };
   };
 
   const commonSafetySettings = [
@@ -43,11 +74,12 @@ async function startServer() {
   // 1. Analyze Image
   app.post("/api/analyze", async (req, res) => {
     try {
-      const apiKey = getApiKey(req);
+      const provider = getProvider(req);
+      const apiKey = getApiKey(req, provider);
       if (!apiKey) {
         return res.status(401).json({
           error: "API_KEY_REQUIRED",
-          message: "Gemini API 키가 설정되어 있지 않습니다. 상단 [API 키 설정] 버튼에서 API 키를 저장해주세요."
+          message: `${provider === "openai" ? "OpenAI" : "Gemini"} API 키가 설정되어 있지 않습니다. 상단 [API 키 설정] 버튼에서 키를 저장해주세요.`
         });
       }
 
@@ -55,15 +87,6 @@ async function startServer() {
       if (!imageBase64 || !mimeType) {
         return res.status(400).json({ error: "이미지 데이터가 필요합니다." });
       }
-
-      const ai = new GoogleGenAI({
-        apiKey,
-        httpOptions: {
-          headers: {
-            "User-Agent": "aistudio-build"
-          }
-        }
-      });
 
       let prompt = "";
       if (mode === AnalysisMode.FULL) {
@@ -105,6 +128,37 @@ async function startServer() {
 
       const cleanBase64 = imageBase64.includes(",") ? imageBase64.split(",")[1] : imageBase64;
 
+      if (provider === "openai") {
+        const openai = new OpenAI({ apiKey });
+        const response = await openai.responses.create({
+          model: "gpt-5.6",
+          reasoning: { effort: "none" },
+          input: [
+            {
+              role: "user",
+              content: [
+                { type: "input_text", text: prompt },
+                {
+                  type: "input_image",
+                  image_url: `data:${mimeType || "image/png"};base64,${cleanBase64}`,
+                  detail: "high"
+                }
+              ]
+            }
+          ]
+        });
+        return res.json({ prompt: response.output_text || "Analysis failed to produce text." });
+      }
+
+      const ai = new GoogleGenAI({
+        apiKey,
+        httpOptions: {
+          headers: {
+            "User-Agent": "aistudio-build"
+          }
+        }
+      });
+
       const response = await ai.models.generateContent({
         model: "gemini-3.6-flash",
         contents: {
@@ -122,7 +176,7 @@ async function startServer() {
 
       res.json({ prompt: response.text || "Analysis failed to produce text." });
     } catch (err: any) {
-      console.error("API /api/analyze error:", err);
+      console.error("API /api/analyze error:", err?.message || "Unknown error");
       res.status(500).json({ error: err.message || "이미지 분석 실패" });
     }
   });
@@ -130,11 +184,12 @@ async function startServer() {
   // 2. Enhance Prompt
   app.post("/api/enhance", async (req, res) => {
     try {
-      const apiKey = getApiKey(req);
+      const provider = getProvider(req);
+      const apiKey = getApiKey(req, provider);
       if (!apiKey) {
         return res.status(401).json({
           error: "API_KEY_REQUIRED",
-          message: "Gemini API 키가 설정되어 있지 않습니다. 상단 [API 키 설정] 버튼에서 API 키를 저장해주세요."
+          message: `${provider === "openai" ? "OpenAI" : "Gemini"} API 키가 설정되어 있지 않습니다. 상단 [API 키 설정] 버튼에서 키를 저장해주세요.`
         });
       }
 
@@ -142,15 +197,6 @@ async function startServer() {
       if (!prompt) {
         return res.status(400).json({ error: "프롬프트가 필요합니다." });
       }
-
-      const ai = new GoogleGenAI({
-        apiKey,
-        httpOptions: {
-          headers: {
-            "User-Agent": "aistudio-build"
-          }
-        }
-      });
 
       const systemInstruction = `
       You are a world-class Prompt Engineer and Cinematographer. 
@@ -164,35 +210,15 @@ async function startServer() {
       6. OUTPUT MUST BE IN ENGLISH only, as this yields the best image generation results.
       `;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.6-flash",
-        contents: `Enhance this prompt:\n"${prompt}"`,
-        config: {
-          systemInstruction
-        }
-      });
-
-      res.json({ prompt: response.text || prompt });
-    } catch (err: any) {
-      console.error("API /api/enhance error:", err);
-      res.status(500).json({ error: err.message || "프롬프트 개선 실패" });
-    }
-  });
-
-  // 3. Generate Image
-  app.post("/api/generate", async (req, res) => {
-    try {
-      const apiKey = getApiKey(req);
-      if (!apiKey) {
-        return res.status(401).json({
-          error: "API_KEY_REQUIRED",
-          message: "Gemini API 키가 설정되어 있지 않습니다. 상단 [API 키 설정] 버튼에서 API 키를 저장해주세요."
+      if (provider === "openai") {
+        const openai = new OpenAI({ apiKey });
+        const response = await openai.responses.create({
+          model: "gpt-5.6",
+          reasoning: { effort: "none" },
+          instructions: systemInstruction,
+          input: `Enhance this prompt:\n"${prompt}"`
         });
-      }
-
-      const { prompt, aspectRatio } = req.body;
-      if (!prompt) {
-        return res.status(400).json({ error: "프롬프트가 필요합니다." });
+        return res.json({ prompt: response.output_text || prompt });
       }
 
       const ai = new GoogleGenAI({
@@ -204,7 +230,64 @@ async function startServer() {
         }
       });
 
+      const response = await ai.models.generateContent({
+        model: "gemini-3.6-flash",
+        contents: `Enhance this prompt:\n"${prompt}"`,
+        config: {
+          systemInstruction
+        }
+      });
+
+      res.json({ prompt: response.text || prompt });
+    } catch (err: any) {
+      console.error("API /api/enhance error:", err?.message || "Unknown error");
+      res.status(500).json({ error: err.message || "프롬프트 개선 실패" });
+    }
+  });
+
+  // 3. Generate Image
+  app.post("/api/generate", async (req, res) => {
+    try {
+      const provider = getProvider(req);
+      const apiKey = getApiKey(req, provider);
+      if (!apiKey) {
+        return res.status(401).json({
+          error: "API_KEY_REQUIRED",
+          message: `${provider === "openai" ? "OpenAI" : "Gemini"} API 키가 설정되어 있지 않습니다. 상단 [API 키 설정] 버튼에서 키를 저장해주세요.`
+        });
+      }
+
+      const { prompt, aspectRatio } = req.body;
+      if (!prompt) {
+        return res.status(400).json({ error: "프롬프트가 필요합니다." });
+      }
+
       const validAspectRatio = (aspectRatio || "16:9") as AspectRatio;
+
+      if (provider === "openai") {
+        const openai = new OpenAI({ apiKey });
+        const response = await openai.images.generate({
+          model: "gpt-image-2",
+          prompt,
+          size: openAIImageSize(validAspectRatio) as any,
+          quality: "medium",
+          output_format: "png"
+        });
+        const imageBase64 = response.data?.[0]?.b64_json;
+        if (!imageBase64) {
+          return res.status(500).json({ error: "OpenAI 응답에서 이미지 데이터를 찾을 수 없습니다." });
+        }
+        return res.json({ imageUrl: `data:image/png;base64,${imageBase64}` });
+      }
+
+      const ai = new GoogleGenAI({
+        apiKey,
+        httpOptions: {
+          headers: {
+            "User-Agent": "aistudio-build"
+          }
+        }
+      });
 
       const response = await ai.models.generateContent({
         model: "gemini-3.1-flash-image",
@@ -234,7 +317,7 @@ async function startServer() {
 
       res.status(500).json({ error: "응답에서 이미지 데이터를 찾을 수 없습니다." });
     } catch (err: any) {
-      console.error("API /api/generate error:", err);
+      console.error("API /api/generate error:", err?.message || "Unknown error");
       res.status(500).json({ error: err.message || "이미지 생성 실패" });
     }
   });
@@ -242,17 +325,47 @@ async function startServer() {
   // 4. Edit Image
   app.post("/api/edit", async (req, res) => {
     try {
-      const apiKey = getApiKey(req);
+      const provider = getProvider(req);
+      const apiKey = getApiKey(req, provider);
       if (!apiKey) {
         return res.status(401).json({
           error: "API_KEY_REQUIRED",
-          message: "Gemini API 키가 설정되어 있지 않습니다. 상단 [API 키 설정] 버튼에서 API 키를 저장해주세요."
+          message: `${provider === "openai" ? "OpenAI" : "Gemini"} API 키가 설정되어 있지 않습니다. 상단 [API 키 설정] 버튼에서 키를 저장해주세요.`
         });
       }
 
       const { imageBase64, prompt, aspectRatio } = req.body;
       if (!imageBase64 || !prompt) {
         return res.status(400).json({ error: "이미지 데이터와 프롬프트가 필요합니다." });
+      }
+
+      const { data: cleanBase64, mimeType } = parseDataUrl(imageBase64);
+
+      const finalPrompt = `Generate a high-quality image based on the attached reference and this description: ${prompt}. \n\nEnsure the style, lighting, and composition align with the reference where appropriate, but fully implement the described changes.`;
+
+      const validAspectRatio = (aspectRatio || "9:16") as AspectRatio;
+
+      if (provider === "openai") {
+        const openai = new OpenAI({ apiKey });
+        const extension = mimeType.includes("jpeg") ? "jpg" : mimeType.split("/")[1] || "png";
+        const sourceImage = await toFile(
+          Buffer.from(cleanBase64, "base64"),
+          `reference.${extension}`,
+          { type: mimeType }
+        );
+        const response = await openai.images.edit({
+          model: "gpt-image-2",
+          image: sourceImage,
+          prompt: finalPrompt,
+          size: openAIImageSize(validAspectRatio) as any,
+          quality: "medium",
+          output_format: "png"
+        });
+        const imageBase64Result = response.data?.[0]?.b64_json;
+        if (!imageBase64Result) {
+          return res.status(500).json({ error: "OpenAI 응답에서 이미지 데이터를 찾을 수 없습니다." });
+        }
+        return res.json({ imageUrl: `data:image/png;base64,${imageBase64Result}` });
       }
 
       const ai = new GoogleGenAI({
@@ -263,22 +376,6 @@ async function startServer() {
           }
         }
       });
-
-      let mimeType = "image/png";
-      let cleanBase64 = imageBase64;
-
-      if (imageBase64.includes(",")) {
-        const parts = imageBase64.split(",");
-        cleanBase64 = parts[1];
-        const mimeMatch = parts[0].match(/:(.*?);/);
-        if (mimeMatch) {
-          mimeType = mimeMatch[1];
-        }
-      }
-
-      const finalPrompt = `Generate a high-quality image based on the attached reference and this description: ${prompt}. \n\nEnsure the style, lighting, and composition align with the reference where appropriate, but fully implement the described changes.`;
-
-      const validAspectRatio = (aspectRatio || "9:16") as AspectRatio;
 
       const response = await ai.models.generateContent({
         model: "gemini-3.1-flash-image",
@@ -325,7 +422,7 @@ async function startServer() {
 
       res.status(500).json({ error: "응답에서 이미지 데이터를 찾을 수 없습니다." });
     } catch (err: any) {
-      console.error("API /api/edit error:", err);
+      console.error("API /api/edit error:", err?.message || "Unknown error");
       res.status(500).json({ error: err.message || "이미지 수정 실패" });
     }
   });

@@ -1,14 +1,14 @@
 import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
-import { AnalysisMode, AspectRatio } from "../types";
+import { AIProvider, AnalysisMode, AspectRatio } from "../types";
 import { getStoredApiKey } from "./apiKeyStorage";
 
-const getHeaders = (): Record<string, string> => {
+const getHeaders = (provider: AIProvider): Record<string, string> => {
   const headers: Record<string, string> = {
     "Content-Type": "application/json"
   };
-  const apiKey = getStoredApiKey();
+  const apiKey = getStoredApiKey(provider);
   if (apiKey) {
-    headers["x-gemini-api-key"] = apiKey;
+    headers[provider === "openai" ? "x-openai-api-key" : "x-gemini-api-key"] = apiKey;
   }
   return headers;
 };
@@ -221,79 +221,104 @@ async function fetchApi<T>(
   endpoint: string,
   body: any,
   extractResult: (data: any) => T,
-  clientFallback: (apiKey: string) => Promise<T>
+  provider: AIProvider,
+  clientFallback?: (apiKey: string) => Promise<T>
 ): Promise<T> {
-  const storedKey = getStoredApiKey();
+  const storedKey = getStoredApiKey(provider);
+  let res: Response;
 
   try {
-    const res = await fetch(endpoint, {
+    res = await fetch(endpoint, {
       method: "POST",
-      headers: getHeaders(),
-      body: JSON.stringify(body)
+      headers: getHeaders(provider),
+      body: JSON.stringify({ ...body, provider })
     });
-
-    const contentType = res.headers.get("content-type") || "";
-    if (contentType.includes("application/json")) {
-      const data = await res.json();
-      if (res.ok) {
-        return extractResult(data);
-      }
-      if (res.status === 401 || data.error === "API_KEY_REQUIRED") {
-        if (storedKey) {
-          return await clientFallback(storedKey);
-        }
-        throw new Error("API_KEY_REQUIRED");
-      }
-      throw new Error(data.message || data.error || "요청 처리 실패");
-    }
   } catch (err: any) {
-    if (err.message === "API_KEY_REQUIRED") throw err;
-    console.warn(`[API Endpoint Warning] ${endpoint} unreachable or returned non-JSON. Trying client mode.`, err);
+    console.warn(`[API Endpoint Warning] ${endpoint} unreachable.`, err);
+    if (provider === "gemini" && storedKey && clientFallback) {
+      return clientFallback(storedKey);
+    }
+    if (storedKey) {
+      throw new Error("OpenAI 요청을 처리할 앱 서버에 연결할 수 없습니다.");
+    }
+    throw new Error("API_KEY_REQUIRED");
   }
 
-  // Fallback to client-side Gemini execution using user's stored local API key
-  if (storedKey) {
-    return await clientFallback(storedKey);
+  const contentType = res.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    const data = await res.json();
+    if (res.ok) {
+      return extractResult(data);
+    }
+    if (res.status === 401 || data.error === "API_KEY_REQUIRED") {
+      if (provider === "gemini" && storedKey && clientFallback) {
+        return clientFallback(storedKey);
+      }
+      throw new Error("API_KEY_REQUIRED");
+    }
+    throw new Error(data.message || data.error || "요청 처리 실패");
   }
 
-  throw new Error("API_KEY_REQUIRED");
+  if (provider === "gemini" && storedKey && clientFallback) {
+    return clientFallback(storedKey);
+  }
+
+  throw new Error("앱 서버가 올바른 JSON 응답을 반환하지 않았습니다.");
 }
 
 // --- Main Service Exports ---
 
-export const analyzeImage = async (file: File, mode: AnalysisMode, additionalInput?: string): Promise<string> => {
+export const analyzeImage = async (
+  file: File,
+  mode: AnalysisMode,
+  additionalInput?: string,
+  provider: AIProvider = "gemini"
+): Promise<string> => {
   const { base64Data, mimeType } = await fileToBase64(file);
   return fetchApi(
     "/api/analyze",
     { imageBase64: base64Data, mimeType, mode, additionalInput },
     (data) => data.prompt,
+    provider,
     (apiKey) => clientAnalyzeImage(apiKey, file, mode, additionalInput)
   );
 };
 
-export const enhancePrompt = async (originalPrompt: string): Promise<string> => {
+export const enhancePrompt = async (originalPrompt: string, provider: AIProvider = "gemini"): Promise<string> => {
   return fetchApi(
     "/api/enhance",
     { prompt: originalPrompt },
     (data) => data.prompt,
+    provider,
     (apiKey) => clientEnhancePrompt(apiKey, originalPrompt)
   );
 };
 
-export const generateImage = async (prompt: string, aspectRatio: AspectRatio): Promise<string> => {
+export const generateImage = async (
+  prompt: string,
+  aspectRatio: AspectRatio,
+  provider: AIProvider = "gemini"
+): Promise<string> => {
   return fetchApi(
     "/api/generate",
     { prompt, aspectRatio },
     (data) => data.imageUrl,
+    provider,
     (apiKey) => clientGenerateImage(apiKey, prompt, aspectRatio)
   );
 };
 
-export const editImage = async (base64Image: string, prompt: string, aspectRatio: AspectRatio = "9:16"): Promise<string> => {
+export const editImage = async (
+  base64Image: string,
+  prompt: string,
+  aspectRatio: AspectRatio = "9:16",
+  provider: AIProvider = "gemini"
+): Promise<string> => {
   return fetchApi(
     "/api/edit",
     { imageBase64: base64Image, prompt, aspectRatio },
     (data) => data.imageUrl,
+    provider,
     (apiKey) => clientEditImage(apiKey, base64Image, prompt, aspectRatio)
   );
 };
