@@ -13,6 +13,7 @@
 ![Node.js](https://img.shields.io/badge/Node.js-20%2B-5FA04E?style=flat-square&logo=nodedotjs&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-4-000000?style=flat-square&logo=express&logoColor=white)
 ![Google Gemini](https://img.shields.io/badge/Google-Gemini-8E75B2?style=flat-square&logo=googlegemini&logoColor=white)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
 <p align="center">
   <img src="docs/images/app-screenshot.png" alt="역프롬프트 이미지 생성 AI 실행 화면" width="100%">
@@ -37,6 +38,7 @@
 - [빌드 및 배포](#빌드-및-배포)
 - [문제 해결](#문제-해결)
 - [현재 동작 범위와 주의사항](#현재-동작-범위와-주의사항)
+- [라이선스](#라이선스)
 - [개발자](#개발자)
 
 ## 앱 소개
@@ -465,7 +467,14 @@ npm start
 - 히스토리는 영구 저장되지 않으며 현재 실행 세션에만 유지됩니다.
 - 브라우저에 저장한 API 키는 소스 코드에 포함되지는 않지만 `localStorage`와 요청 헤더를 검사할 수 있는 사용자 또는 스크립트가 접근할 수 있습니다.
 - 업로드 이미지와 프롬프트는 Gemini 처리를 위해 Google API로 전송됩니다. 민감한 정보가 포함된 자료를 사용할 때는 조직의 보안·개인정보 정책을 확인하세요.
-- 저장소에는 현재 별도의 `LICENSE` 파일이 없습니다. 재배포나 상업적 사용 전에는 개발자에게 사용 조건을 확인하세요.
+## 라이선스
+
+이 프로젝트는 **MIT 라이선스**로 배포됩니다. 사용, 복제, 수정, 병합, 게시, 배포, 재라이선스 및 판매가 허용되지만, 모든 사본 또는 중요한 부분에는 다음 저작권자 정보와 MIT 허가 고지가 포함되어야 합니다.
+
+**Copyright (c) 2026 Lebi (Cybereun)**
+
+- [MIT License — English](LICENSE)
+- [MIT 라이선스 — 한국어 번역](LICENSE.ko.md)
 
 ## 개발자
 
@@ -479,4 +488,4 @@ npm start
 
 ---
 
-Made with React, TypeScript, Express and Google Gemini by **Lebi (Cybereun)**.
+Made with React, TypeScript, Express, Google Gemini, and OpenAI by **Lebi (Cybereun)**.
