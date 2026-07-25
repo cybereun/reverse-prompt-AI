@@ -1,0 +1,8 @@
+{
+  "name": "역프롬프트 이미지 생성 AI",
+  "description": "Professional AI Photography & Prompt Engineering Tool using Gemini Vision and Image Generation models.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
