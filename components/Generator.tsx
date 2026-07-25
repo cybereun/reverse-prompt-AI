@@ -332,38 +332,38 @@ const Generator: React.FC<GeneratorProps> = ({ initialPrompt = "", initialSource
       {/* MIDDLE: Pose Library (Independent Scroll Container) */}
       <div className="lg:col-span-3 flex flex-col h-[400px] lg:h-full min-h-0">
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 shadow-sm h-full flex flex-col overflow-hidden">
-            <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider mb-3 flex items-center gap-2 flex-shrink-0">
+            <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2 flex-shrink-0">
                 <Palette className="w-4 h-4 text-purple-400" /> 포즈 라이브러리
             </h3>
             
             {/* Scrollable list */}
-            <div className="flex-1 overflow-y-auto pr-1 space-y-2">
+            <div className="flex-1 overflow-y-auto pr-1 space-y-2.5">
               {POSE_CATEGORIES.map((category) => (
-                <div key={category.id} className="border border-zinc-800 rounded-lg bg-zinc-950/40 overflow-hidden">
+                <div key={category.id} className="border border-zinc-800 rounded-xl bg-zinc-950/40 overflow-hidden">
                   <button 
                     onClick={() => toggleCategory(category.id)}
-                    className="w-full px-3 py-2.5 flex items-center justify-between text-left hover:bg-zinc-800/80 transition-colors group"
+                    className="w-full px-3.5 py-3 flex items-center justify-between text-left hover:bg-zinc-800/80 transition-colors group"
                   >
-                    <div className="flex items-center gap-2.5 overflow-hidden">
-                       <span className="text-lg flex-shrink-0 group-hover:scale-110 transition-transform">{category.emoji}</span>
+                    <div className="flex items-center gap-3 overflow-hidden">
+                       <span className="text-xl flex-shrink-0 group-hover:scale-110 transition-transform">{category.emoji}</span>
                        <div className="flex flex-col min-w-0">
-                           <span className="text-xs font-bold text-zinc-200 truncate">{category.title.split(':')[1]?.trim() || category.title}</span>
-                           <span className="text-[10px] text-zinc-500 truncate">{category.description}</span>
+                           <span className="text-sm font-bold text-zinc-100 truncate leading-snug">{category.title.split(':')[1]?.trim() || category.title}</span>
+                           <span className="text-xs text-zinc-400 truncate mt-0.5">{category.description}</span>
                        </div>
                     </div>
                     {expandedCategory === category.id 
-                      ? <ChevronDown className="w-4 h-4 text-zinc-400 flex-shrink-0" /> 
-                      : <ChevronRight className="w-4 h-4 text-zinc-500 flex-shrink-0" />}
+                      ? <ChevronDown className="w-4 h-4 text-zinc-400 flex-shrink-0 ml-1" /> 
+                      : <ChevronRight className="w-4 h-4 text-zinc-500 flex-shrink-0 ml-1" />}
                   </button>
                   
                   {expandedCategory === category.id && (
-                    <div className="px-2 pb-2 bg-zinc-950/90 border-t border-zinc-800/80 animate-fade-in">
-                       <div className="space-y-1 mt-1.5">
+                    <div className="px-2.5 pb-2.5 bg-zinc-950/90 border-t border-zinc-800/80 animate-fade-in">
+                       <div className="space-y-1.5 mt-2">
                          {category.items.map((item, idx) => (
                            <button
                              key={idx}
                              onClick={() => handleAddPose(item)}
-                             className="w-full text-left px-2.5 py-1.5 text-xs text-zinc-400 hover:text-purple-200 hover:bg-purple-950/40 rounded transition-colors leading-normal border-l-2 border-transparent hover:border-purple-500 whitespace-normal break-keep"
+                             className="w-full text-left px-3 py-2 text-xs text-zinc-300 hover:text-purple-200 hover:bg-purple-950/50 rounded-lg transition-colors leading-relaxed border-l-2 border-transparent hover:border-purple-500 whitespace-normal break-keep"
                              title="클릭하여 수정 프롬프트에 추가"
                            >
                              {item}
