@@ -1,0 +1,104 @@
+import React from 'react';
+
+interface AppIconProps {
+  className?: string;
+  size?: number;
+}
+
+export const AppIcon: React.FC<AppIconProps> = ({ className = "w-10 h-10", size = 512 }) => {
+  return (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      viewBox="0 0 512 512" 
+      width={size} 
+      height={size}
+      className={className}
+    >
+      <defs>
+        <linearGradient id="appIconBodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#8B5CF6"/>
+          <stop offset="50%" stopColor="#6366F1"/>
+          <stop offset="100%" stopColor="#3B82F6"/>
+        </linearGradient>
+
+        <linearGradient id="appIconLensOuterGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#38BDF8"/>
+          <stop offset="50%" stopColor="#818CF8"/>
+          <stop offset="100%" stopColor="#C084FC"/>
+        </linearGradient>
+
+        <radialGradient id="appIconLensGlass" cx="35%" cy="35%" r="65%">
+          <stop offset="0%" stopColor="#60A5FA"/>
+          <stop offset="40%" stopColor="#1E3A8A"/>
+          <stop offset="85%" stopColor="#0F172A"/>
+          <stop offset="100%" stopColor="#020617"/>
+        </radialGradient>
+
+        <linearGradient id="appIconSparkleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#FDE047"/>
+          <stop offset="100%" stopColor="#F97316"/>
+        </linearGradient>
+
+        <linearGradient id="appIconCheekGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#F43F5E" stopOpacity="0.7"/>
+          <stop offset="100%" stopColor="#FB7185" stopOpacity="0.3"/>
+        </linearGradient>
+      </defs>
+
+      <g>
+        {/* Background Magic Sparkles */}
+        <path d="M 430 70 Q 430 100 460 100 Q 430 100 430 130 Q 430 100 400 100 Q 430 100 430 70 Z" fill="url(#appIconSparkleGrad)"/>
+        <path d="M 65 380 Q 65 395 80 395 Q 65 395 65 410 Q 65 395 50 395 Q 65 395 65 380 Z" fill="#38BDF8"/>
+        <path d="M 430 380 Q 430 392 442 392 Q 430 392 430 404 Q 430 392 418 392 Q 430 392 430 380 Z" fill="#F472B6"/>
+
+        {/* Top Camera Bump / Viewfinder */}
+        <path d="M 190 135 C 190 95, 220 80, 256 80 C 292 80, 322 95, 322 135 Z" fill="url(#appIconBodyGrad)" />
+        {/* Flash Light Gem */}
+        <circle cx="256" cy="112" r="16" fill="#FDE047" />
+        <circle cx="251" cy="107" r="6" fill="#FFFFFF" opacity="0.9"/>
+
+        {/* Main Body */}
+        <rect x="66" y="130" width="380" height="280" rx="70" ry="70" fill="url(#appIconBodyGrad)" />
+        
+        {/* Glossy Top Highlight */}
+        <path d="M 100 150 Q 256 135 412 150 Q 420 175 92 175 Q 92 160 100 150 Z" fill="#FFFFFF" opacity="0.25" />
+
+        {/* Cute Eyes */}
+        <g transform="translate(145, 205)">
+          <circle cx="0" cy="0" r="20" fill="#0F172A"/>
+          <circle cx="-6" cy="-6" r="8" fill="#FFFFFF"/>
+          <circle cx="7" cy="6" r="3.5" fill="#FFFFFF"/>
+        </g>
+
+        <g transform="translate(367, 205)">
+          <circle cx="0" cy="0" r="20" fill="#0F172A"/>
+          <circle cx="-6" cy="-6" r="8" fill="#FFFFFF"/>
+          <circle cx="7" cy="6" r="3.5" fill="#FFFFFF"/>
+        </g>
+
+        {/* Cheeks */}
+        <ellipse cx="135" cy="238" rx="18" ry="12" fill="url(#appIconCheekGrad)" />
+        <ellipse cx="377" cy="238" rx="18" ry="12" fill="url(#appIconCheekGrad)" />
+
+        {/* Smile */}
+        <path d="M 242 222 Q 256 236 270 222" fill="none" stroke="#0F172A" strokeWidth="6" strokeLinecap="round" />
+
+        {/* Lens Structure */}
+        <circle cx="256" cy="285" r="98" fill="url(#appIconLensOuterGrad)"/>
+        <circle cx="256" cy="285" r="86" fill="#0F172A" />
+        <circle cx="256" cy="285" r="74" fill="url(#appIconLensGlass)" />
+
+        {/* Lens Glare */}
+        <ellipse cx="228" cy="255" rx="30" ry="18" fill="#FFFFFF" opacity="0.5" transform="rotate(-30 228 255)"/>
+        <circle cx="285" cy="315" r="9" fill="#38BDF8" opacity="0.8"/>
+
+        {/* Pupil Sparkle */}
+        <path d="M 256 268 Q 256 285 273 285 Q 256 285 256 302 Q 256 285 239 285 Q 256 285 256 268 Z" fill="#FDE047" />
+
+        {/* AI Badge Button */}
+        <circle cx="388" cy="165" r="18" fill="#EC4899" />
+        <path d="M 388 155 Q 388 165 398 165 Q 388 165 388 175 Q 388 165 378 165 Q 388 165 388 155 Z" fill="#FFFFFF" />
+      </g>
+    </svg>
+  );
+};
