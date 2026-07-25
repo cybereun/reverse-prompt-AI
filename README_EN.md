@@ -13,6 +13,7 @@
 ![Node.js](https://img.shields.io/badge/Node.js-20%2B-5FA04E?style=flat-square&logo=nodedotjs&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-4-000000?style=flat-square&logo=express&logoColor=white)
 ![Google Gemini](https://img.shields.io/badge/Google-Gemini-8E75B2?style=flat-square&logo=googlegemini&logoColor=white)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
 <p align="center">
   <img src="docs/images/app-screenshot.png" alt="Reverse Prompt Image Generation AI application screen" width="100%">
@@ -37,6 +38,7 @@
 - [Build and Deployment](#build-and-deployment)
 - [Troubleshooting](#troubleshooting)
 - [Current Limitations and Important Notes](#current-limitations-and-important-notes)
+- [License](#license)
 - [Developer](#developer)
 
 ## About the App
@@ -468,7 +470,14 @@ History currently lives only in React memory. Losing it after a page refresh is 
 - History is not persistent and lasts only for the current application session.
 - A browser-stored API key is not embedded in the source, but users or scripts that can inspect `localStorage` and request headers may access it.
 - Uploaded images and prompts are sent to Google APIs for Gemini processing. Check your organization's security and privacy rules before using sensitive material.
-- The repository currently has no separate `LICENSE` file. Contact the developer about usage terms before redistribution or commercial use.
+## License
+
+This project is distributed under the **MIT License**. Use, copying, modification, merging, publication, distribution, sublicensing, and sale are permitted, provided that the copyright notice and MIT permission notice remain included in all copies or substantial portions.
+
+**Copyright (c) 2026 Lebi (Cybereun)**
+
+- [MIT License — English](LICENSE)
+- [MIT License — Korean translation](LICENSE.ko.md)
 
 ## Developer
 
@@ -482,4 +491,4 @@ Please use GitHub Issues for bug reports and improvement suggestions.
 
 ---
 
-Made with React, TypeScript, Express, and Google Gemini by **Lebi (Cybereun)**.
+Made with React, TypeScript, Express, Google Gemini, and OpenAI by **Lebi (Cybereun)**.
