@@ -159,14 +159,23 @@ img {
   background: rgba(81, 225, 147, 0.08);
 }
 
+.first-screen {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: calc(100svh - 85px);
+  background:
+    radial-gradient(circle at 78% 28%, rgba(27, 101, 65, 0.11), transparent 34%),
+    var(--bg);
+}
+
 .hero-section {
   position: relative;
   display: grid;
   grid-template-columns: 0.95fr 1.05fr;
-  min-height: 760px;
+  min-height: 0;
   width: min(1440px, calc(100% - 64px));
   margin: 0 auto;
-  padding: 88px 0 80px;
+  padding: clamp(54px, 7vh, 88px) 0 clamp(44px, 6vh, 72px);
 }
 
 .hero-copy {
