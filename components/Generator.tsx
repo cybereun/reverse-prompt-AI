@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { generateImage, editImage } from '../services/geminiService';
 import { AspectRatio, ASPECT_RATIOS, HistoryItem } from '../types';
 import { POSE_CATEGORIES } from '../data/poses';
-import { Loader2, Wand2, Download, Image as ImageIcon, RotateCcw, Sparkles, Upload, X, Camera, ChevronDown, ChevronRight, Eraser, Palette } from 'lucide-react';
+import { Loader2, Wand2, Download, Image as ImageIcon, RotateCcw, Sparkles, X, Camera, ChevronDown, ChevronRight, Eraser, Palette } from 'lucide-react';
 
 interface GeneratorProps {
   initialPrompt?: string;
@@ -133,7 +133,6 @@ const Generator: React.FC<GeneratorProps> = ({ initialPrompt = "", initialSource
         prompt: `Edited: ${editPrompt} (Origin: ${prompt.slice(0, 30)}...)`,
         aspectRatio: aspectRatio
       });
-      // Do not clear edit prompt immediately to allow further tweaking
     } catch (err: any) {
       if (err?.message === 'API_KEY_REQUIRED' || err?.message?.includes('API_KEY_REQUIRED')) {
         onApiKeyRequired?.();
@@ -179,11 +178,12 @@ const Generator: React.FC<GeneratorProps> = ({ initialPrompt = "", initialSource
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
-      {/* LEFT: Controls & Inputs (2 cols -> ~16%) */}
-      <div className="lg:col-span-2 flex flex-col h-full min-h-0">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 shadow-sm flex-1 flex flex-col overflow-y-auto custom-scrollbar">
-          <div className="flex items-center justify-between mb-4">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:h-[calc(100vh-11rem)]">
+      
+      {/* LEFT: Controls & Inputs (Studio) */}
+      <div className="lg:col-span-3 xl:col-span-3 flex flex-col h-auto lg:h-full min-h-0">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 shadow-sm h-full flex flex-col overflow-y-auto space-y-4">
+          <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-white flex items-center gap-2">
               <Wand2 className="w-4 h-4 text-green-400" />
               스튜디오
@@ -197,7 +197,7 @@ const Generator: React.FC<GeneratorProps> = ({ initialPrompt = "", initialSource
             </button>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 flex-1">
             
             {/* Source Image Upload */}
             <div className="space-y-1">
@@ -275,20 +275,20 @@ const Generator: React.FC<GeneratorProps> = ({ initialPrompt = "", initialSource
             <button
               onClick={handleGenerate}
               disabled={isGenerating || !prompt.trim()}
-              className={`w-full py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all
+              className={`w-full py-2.5 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all
                 ${isGenerating || !prompt.trim()
                   ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
                   : 'bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-500/20'}`}
             >
-              {isGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <ImageIcon className="w-3 h-3" />}
+              {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImageIcon className="w-3.5 h-3.5" />}
               {isGenerating ? '생성 중...' : (sourceImage ? '변환' : '생성')}
             </button>
             
             {/* Edit Section */}
-            <div className="mt-6 pt-4 border-t border-zinc-800">
+            <div className="pt-3 border-t border-zinc-800">
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-xs font-medium text-purple-400 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" /> 수정
+                  <Sparkles className="w-3 h-3" /> 수정 (포즈/상황 추가)
                 </label>
                 {editPrompt && (
                     <button 
@@ -306,8 +306,8 @@ const Generator: React.FC<GeneratorProps> = ({ initialPrompt = "", initialSource
                    <textarea
                     value={editPrompt}
                     onChange={(e) => setEditPrompt(e.target.value)}
-                    placeholder="포즈 선택 또는 입력..."
-                    className="w-full h-20 bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-xs text-zinc-200 focus:ring-1 focus:ring-purple-500 focus:border-transparent outline-none resize-none placeholder:text-zinc-600"
+                    placeholder="오른쪽 포즈 라이브러리 클릭 또는 직접 입력..."
+                    className="w-full h-16 bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-xs text-zinc-200 focus:ring-1 focus:ring-purple-500 focus:border-transparent outline-none resize-none placeholder:text-zinc-600"
                   />
                 </div>
                 
@@ -329,38 +329,42 @@ const Generator: React.FC<GeneratorProps> = ({ initialPrompt = "", initialSource
         </div>
       </div>
 
-      {/* MIDDLE: Pose Library (3 cols -> ~25%) */}
-      <div className="lg:col-span-3 flex flex-col h-full min-h-0">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 shadow-sm flex-1 flex flex-col overflow-hidden">
-            <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <Palette className="w-4 h-4" /> 포즈 라이브러리
+      {/* MIDDLE: Pose Library (Independent Scroll Container) */}
+      <div className="lg:col-span-3 flex flex-col h-[400px] lg:h-full min-h-0">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 shadow-sm h-full flex flex-col overflow-hidden">
+            <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider mb-3 flex items-center gap-2 flex-shrink-0">
+                <Palette className="w-4 h-4 text-purple-400" /> 포즈 라이브러리
             </h3>
-            <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-3">
+            
+            {/* Scrollable list */}
+            <div className="flex-1 overflow-y-auto pr-1 space-y-2">
               {POSE_CATEGORIES.map((category) => (
-                <div key={category.id} className="border border-zinc-800 rounded-lg bg-zinc-950/30 overflow-hidden">
+                <div key={category.id} className="border border-zinc-800 rounded-lg bg-zinc-950/40 overflow-hidden">
                   <button 
                     onClick={() => toggleCategory(category.id)}
-                    className="w-full px-4 py-5 flex items-center justify-between text-left hover:bg-zinc-800 transition-colors group"
+                    className="w-full px-3 py-2.5 flex items-center justify-between text-left hover:bg-zinc-800/80 transition-colors group"
                   >
-                    <div className="flex items-center gap-4 overflow-hidden">
-                       <span className="text-3xl flex-shrink-0 group-hover:scale-110 transition-transform">{category.emoji}</span>
+                    <div className="flex items-center gap-2.5 overflow-hidden">
+                       <span className="text-lg flex-shrink-0 group-hover:scale-110 transition-transform">{category.emoji}</span>
                        <div className="flex flex-col min-w-0">
-                           <span className="text-[20px] font-bold text-zinc-200 truncate">{category.title.split(':')[1]?.trim() || category.title}</span>
-                           <span className="text-sm text-zinc-500 truncate mt-1">{category.description}</span>
+                           <span className="text-xs font-bold text-zinc-200 truncate">{category.title.split(':')[1]?.trim() || category.title}</span>
+                           <span className="text-[10px] text-zinc-500 truncate">{category.description}</span>
                        </div>
                     </div>
-                    {expandedCategory === category.id ? <ChevronDown className="w-6 h-6 text-zinc-400 flex-shrink-0" /> : <ChevronRight className="w-6 h-6 text-zinc-500 flex-shrink-0" />}
+                    {expandedCategory === category.id 
+                      ? <ChevronDown className="w-4 h-4 text-zinc-400 flex-shrink-0" /> 
+                      : <ChevronRight className="w-4 h-4 text-zinc-500 flex-shrink-0" />}
                   </button>
                   
                   {expandedCategory === category.id && (
-                    <div className="px-3 pb-3 bg-zinc-950 border-t border-zinc-800 animate-fade-in">
-                       <div className="space-y-1 mt-2">
+                    <div className="px-2 pb-2 bg-zinc-950/90 border-t border-zinc-800/80 animate-fade-in">
+                       <div className="space-y-1 mt-1.5">
                          {category.items.map((item, idx) => (
                            <button
                              key={idx}
                              onClick={() => handleAddPose(item)}
-                             className="w-full text-left px-3 py-3 text-sm text-zinc-400 hover:text-purple-200 hover:bg-zinc-800/80 rounded-md transition-colors leading-relaxed border-l-2 border-transparent hover:border-purple-500 whitespace-normal break-keep"
-                             title={item}
+                             className="w-full text-left px-2.5 py-1.5 text-xs text-zinc-400 hover:text-purple-200 hover:bg-purple-950/40 rounded transition-colors leading-normal border-l-2 border-transparent hover:border-purple-500 whitespace-normal break-keep"
+                             title="클릭하여 수정 프롬프트에 추가"
                            >
                              {item}
                            </button>
@@ -374,9 +378,9 @@ const Generator: React.FC<GeneratorProps> = ({ initialPrompt = "", initialSource
         </div>
       </div>
 
-      {/* RIGHT: Preview (7 cols -> ~58%) */}
-      <div className="lg:col-span-7 flex flex-col h-full min-h-0">
-        <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl p-1 relative overflow-hidden flex items-center justify-center min-h-[650px]">
+      {/* RIGHT: Preview Window (Pinned at top, doesn't jump or move down) */}
+      <div className="lg:col-span-6 xl:col-span-6 flex flex-col h-[500px] lg:h-full min-h-0">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-2 relative overflow-hidden flex items-center justify-center h-full">
           {generatedImage ? (
              <img 
                src={generatedImage} 
@@ -385,25 +389,26 @@ const Generator: React.FC<GeneratorProps> = ({ initialPrompt = "", initialSource
              />
           ) : (
             <div className="text-zinc-600 flex flex-col items-center">
-              <ImageIcon className="w-24 h-24 mb-6 opacity-10" />
-              <p className="text-lg font-medium text-zinc-500">생성된 이미지가 여기에 표시됩니다</p>
+              <ImageIcon className="w-16 h-16 mb-4 opacity-15 text-zinc-500" />
+              <p className="text-sm font-medium text-zinc-500">생성된 이미지가 여기에 표시됩니다</p>
             </div>
           )}
           
           {/* Download Overlay */}
           {generatedImage && (
-            <div className="absolute top-6 right-6">
+            <div className="absolute top-4 right-4">
                <button 
                  onClick={downloadImage}
-                 className="p-4 bg-zinc-900/80 backdrop-blur-md hover:bg-white hover:text-black text-white rounded-full transition-all shadow-xl border border-white/10"
-                 title="Download"
+                 className="p-3 bg-zinc-900/80 backdrop-blur-md hover:bg-white hover:text-black text-white rounded-full transition-all shadow-xl border border-white/10"
+                 title="이미지 다운로드"
                >
-                 <Download className="w-6 h-6" />
+                 <Download className="w-5 h-5" />
                </button>
             </div>
           )}
         </div>
       </div>
+
     </div>
   );
 };
