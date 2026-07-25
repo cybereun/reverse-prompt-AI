@@ -1,17 +1,23 @@
+import subwayResultUrl from "./assets/example-edited-subway.jpg";
+import stairsResultUrl from "./assets/example-edited-stairs.jpg";
+
 const resultData = {
   subway: {
-    src: "./assets/example-edited-subway.jpg",
+    src: subwayResultUrl,
     alt: "지하철 장면으로 변환한 결과 이미지",
     title: "새로운 지하철 장면",
+    fit: "cover",
   },
   stairs: {
-    src: "./assets/example-edited-stairs.jpg",
+    src: stairsResultUrl,
     alt: "계단 장면으로 변환한 결과 이미지",
     title: "새로운 계단 장면",
+    fit: "contain",
   },
 };
 
 const preview = document.querySelector("#result-preview");
+const resultFrame = preview?.closest(".result-image");
 const resultTitle = document.querySelector("#result-title");
 const tabs = document.querySelectorAll(".result-tab");
 
@@ -32,6 +38,7 @@ tabs.forEach((tab) => {
       preview.src = next.src;
       preview.alt = next.alt;
       resultTitle.textContent = next.title;
+      resultFrame?.classList.toggle("portrait-result", next.fit === "contain");
       preview.style.opacity = "1";
     }, 150);
   });
