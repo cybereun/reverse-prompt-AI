@@ -44,7 +44,7 @@
 
     <!-- Main Body -->
     <rect x="66" y="130" width="380" height="280" rx="70" ry="70" fill="url(#bodyGrad)" />
-    
+
     <!-- Glossy Top Highlight -->
     <path d="M 100 150 Q 256 135 412 150 Q 420 175 92 175 Q 92 160 100 150 Z" fill="#FFFFFF" opacity="0.25" />
 
