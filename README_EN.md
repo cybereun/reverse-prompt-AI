@@ -103,7 +103,7 @@ The following examples use the original image as a reference and apply this app'
 | Multiple aspect ratios | Supports `16:9`, `9:16`, `1:1`, `4:3`, `3:4`, and `21:9`. |
 | Session history | Collects analysis and generation results in a gallery for quick reuse during the current session. |
 | Image downloads | Saves generated images and history items as PNG files. |
-| Multiple AI providers | Switch between Google Gemini and OpenAI while keeping the same workflow. |
+| Multiple AI providers | Switch between Google Gemini and OpenAI in the API-key settings modal while keeping the same workflow. |
 | Provider-specific local keys | Store and delete Gemini and OpenAI keys separately in the user's browser. |
 | Responsive dark UI | Provides a studio-style interface for desktop and mobile screens. |
 | PWA metadata | Includes a web app manifest and application icons. |
@@ -181,8 +181,8 @@ Analysis and generation results are automatically added to the application's in-
 ### First-Time Setup
 
 1. Start the app and open `http://localhost:3000`.
-2. Select **Gemini** or **OpenAI** in the top navigation.
-3. Click **API 키 설정** (API Key Settings) and open the desired provider tab.
+2. Click **API 키 설정** (API Key Settings) in the top navigation.
+3. Select the **Gemini** or **OpenAI** tab in the settings modal.
 4. Enter a key issued by Google AI Studio or OpenAI Platform.
 5. Save the key. The status indicator turns green when it is available.
 
@@ -377,7 +377,7 @@ Model names and availability may change with Google Gemini API policies. When ch
 
 ### Request Flow
 
-1. The user selects Gemini or OpenAI in the top navigation.
+1. The user selects Gemini or OpenAI in the API-key settings modal.
 2. The frontend includes `provider` in the body and sends only the selected provider's key in a request header.
 3. The server calls the selected provider and does not persist OpenAI keys.
 4. The frontend displays the server response.

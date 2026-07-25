@@ -22,6 +22,7 @@ import {
 interface ApiKeyModalProps {
   isOpen: boolean;
   initialProvider: AIProvider;
+  onProviderChange: (provider: AIProvider) => void;
   onClose: () => void;
   onKeyUpdated?: () => void;
 }
@@ -52,7 +53,13 @@ const PROVIDERS: Array<{
   }
 ];
 
-const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, initialProvider, onClose, onKeyUpdated }) => {
+const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
+  isOpen,
+  initialProvider,
+  onProviderChange,
+  onClose,
+  onKeyUpdated
+}) => {
   const [activeProvider, setActiveProvider] = useState<AIProvider>("gemini");
   const [keyInputs, setKeyInputs] = useState<Record<AIProvider, string>>({
     gemini: "",
@@ -137,6 +144,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, initialProvider, onCl
                 type="button"
                 onClick={() => {
                   setActiveProvider(provider.id);
+                  onProviderChange(provider.id);
                   setShowKey(false);
                   setSavedProvider(null);
                 }}

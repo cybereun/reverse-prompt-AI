@@ -84,29 +84,6 @@ function App() {
                 })}
               </div>
 
-              {/* AI Provider Selector */}
-              <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg p-1">
-                {([
-                  { id: 'gemini', label: 'Gemini' },
-                  { id: 'openai', label: 'OpenAI' }
-                ] as const).map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => handleProviderChange(item.id)}
-                    className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
-                      provider === item.id
-                        ? item.id === 'openai'
-                          ? 'bg-emerald-600 text-white'
-                          : 'bg-blue-600 text-white'
-                        : 'text-zinc-500 hover:text-zinc-200'
-                    }`}
-                    title={`${item.label} 사용`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-
               {/* API Key Settings Button */}
               <button
                 onClick={() => setIsApiKeyModalOpen(true)}
@@ -179,6 +156,7 @@ function App() {
       <ApiKeyModal
         isOpen={isApiKeyModalOpen}
         initialProvider={provider}
+        onProviderChange={handleProviderChange}
         onClose={() => setIsApiKeyModalOpen(false)}
         onKeyUpdated={handleKeyUpdated}
       />
