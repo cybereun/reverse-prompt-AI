@@ -55,8 +55,13 @@ function App() {
       {/* Navbar */}
       <nav className="border-b border-zinc-800 bg-zinc-950/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 gap-2">
-            <div />
+          <div className="flex items-center justify-between h-16 gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <AppIcon className="w-8 h-8 sm:w-9 sm:h-9 flex-shrink-0" />
+              <span className="text-xs sm:text-sm lg:text-base font-bold text-white whitespace-nowrap">
+                역프롬프트 이미지 생성 AI
+              </span>
+            </div>
             
             <div className="flex items-center gap-2">
               {/* Navigation Tabs */}
@@ -107,11 +112,13 @@ function App() {
       <main className="w-full px-4 sm:px-6 lg:px-8 py-6">
         <div className="min-h-[calc(100vh-8rem)]">
           <div style={{ display: activeTab === 'analyze' ? 'block' : 'none' }} className="animate-fade-in">
-            <div className="mb-6 flex items-center gap-3">
-              <AppIcon className="w-10 h-10 flex-shrink-0" />
+            <div className="mb-5">
               <div>
-                <h1 className="text-3xl font-bold text-white">이미지 분석 스튜디오</h1>
-                <p className="text-zinc-400 text-sm mt-0.5">참조 이미지에서 전문가급 프롬프트와 기술적 사양을 추출합니다.</p>
+                <h1 className="text-xl font-bold text-white flex items-center gap-2">
+                  <span aria-hidden="true">🔍</span>
+                  이미지 분석
+                </h1>
+                <p className="text-zinc-400 text-xs mt-1">참조 이미지에서 전문가급 프롬프트와 기술적 사양을 추출합니다.</p>
               </div>
             </div>
             <Analyzer 
@@ -123,12 +130,14 @@ function App() {
           </div>
 
           <div style={{ display: activeTab === 'generate' ? 'block' : 'none' }} className="animate-fade-in">
-             <div className="mb-6 flex items-center gap-3">
-               <AppIcon className="w-10 h-10 flex-shrink-0" />
-               <div>
-                 <h1 className="text-3xl font-bold text-white">역프롬프트 이미지 생성 AI</h1>
-                 <p className="text-zinc-400 text-sm mt-0.5">최적화된 프롬프트로 놀라운 예술 작품을 만들어보세요.</p>
-               </div>
+            <div className="mb-5">
+              <div>
+                <h1 className="text-xl font-bold text-white flex items-center gap-2">
+                  <span aria-hidden="true">🎨</span>
+                  이미지 생성
+                </h1>
+                <p className="text-zinc-400 text-xs mt-1">최적화된 프롬프트로 놀라운 예술 작품을 만들어보세요.</p>
+              </div>
             </div>
             <Generator 
               provider={provider}
@@ -140,13 +149,15 @@ function App() {
           </div>
 
           <div style={{ display: activeTab === 'history' ? 'block' : 'none' }} className="animate-fade-in">
-             <div className="mb-6 flex items-center gap-3">
-                <AppIcon className="w-10 h-10 flex-shrink-0" />
-                <div>
-                  <h1 className="text-3xl font-bold text-white">기록 및 갤러리</h1>
-                  <p className="text-zinc-400 text-sm mt-0.5">과거 분석 및 생성 기록을 확인하세요.</p>
-                </div>
+            <div className="mb-5">
+              <div>
+                <h1 className="text-xl font-bold text-white flex items-center gap-2">
+                  <span aria-hidden="true">📚</span>
+                  히스토리
+                </h1>
+                <p className="text-zinc-400 text-xs mt-1">과거 분석 및 생성 기록을 확인하세요.</p>
               </div>
+            </div>
             <History items={history} onSelectPrompt={handleHistoryPromptSelect} />
           </div>
         </div>
