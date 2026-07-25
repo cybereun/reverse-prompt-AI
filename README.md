@@ -1,5 +1,7 @@
 # 역프롬프트 이미지 생성 AI
 
+[한국어](README.md) | [English](README_EN.md)
+
 > 참조 이미지를 전문가급 영문 프롬프트로 역분석하고, 프롬프트 개선부터 이미지 생성·변환·후속 편집까지 한 화면에서 처리하는 Gemini 기반 AI 이미지 스튜디오입니다.
 
 [![Developer](https://img.shields.io/badge/Developer-Lebi%20(Cybereun)-7C3AED?style=for-the-badge&logo=github&logoColor=white)](https://github.com/cybereun)
