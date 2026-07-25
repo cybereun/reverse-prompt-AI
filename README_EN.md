@@ -2,7 +2,7 @@
 
 [한국어](README.md) | [English](README_EN.md)
 
-> A Gemini-powered AI image studio that reverse-engineers reference images into professional English prompts and brings prompt enhancement, generation, transformation, and iterative editing together in one interface.
+> A Gemini and OpenAI-powered image studio that reverse-engineers reference images into professional English prompts and brings prompt enhancement, generation, transformation, and iterative editing together in one interface.
 
 [![Developer](https://img.shields.io/badge/Developer-Lebi%20(Cybereun)-7C3AED?style=for-the-badge&logo=github&logoColor=white)](https://github.com/cybereun)
 [![Repository](https://img.shields.io/badge/GitHub-reverse--prompt--AI-181717?style=for-the-badge&logo=github)](https://github.com/cybereun/reverse-prompt-AI)
@@ -103,7 +103,8 @@ The following examples use the original image as a reference and apply this app'
 | Multiple aspect ratios | Supports `16:9`, `9:16`, `1:1`, `4:3`, `3:4`, and `21:9`. |
 | Session history | Collects analysis and generation results in a gallery for quick reuse during the current session. |
 | Image downloads | Saves generated images and history items as PNG files. |
-| Flexible API keys | Supports a server environment key or a Gemini key stored in the user's browser. |
+| Multiple AI providers | Switch between Google Gemini and OpenAI while keeping the same workflow. |
+| Provider-specific local keys | Store and delete Gemini and OpenAI keys separately in the user's browser. |
 | Responsive dark UI | Provides a studio-style interface for desktop and mobile screens. |
 | PWA metadata | Includes a web app manifest and application icons. |
 
@@ -180,10 +181,10 @@ Analysis and generation results are automatically added to the application's in-
 ### First-Time Setup
 
 1. Start the app and open `http://localhost:3000`.
-2. Click **API 키 설정** (API Key Settings) in the top navigation.
-3. Enter a Gemini API key issued by Google AI Studio.
-4. Click **로컬에 저장** (Save Locally).
-5. The status indicator turns green when the key is available.
+2. Select **Gemini** or **OpenAI** in the top navigation.
+3. Click **API 키 설정** (API Key Settings) and open the desired provider tab.
+4. Enter a key issued by Google AI Studio or OpenAI Platform.
+5. Save the key. The status indicator turns green when it is available.
 
 If `GEMINI_API_KEY` is already configured on the server, users do not need to register a separate browser key.
 
@@ -293,32 +294,27 @@ The build output is written to `dist/`. Express serves both the static frontend 
 
 ## API Key Configuration
 
-Gemini API keys can be provided in two ways.
+Gemini and OpenAI keys can be registered and deleted independently in the settings modal.
 
-### Option A: Server Environment Variable
+### Browser Local Storage
 
-A server-side key is recommended for a shared server or team environment.
+Keys are separated by provider in the current browser's `localStorage`.
 
-```env
-GEMINI_API_KEY=your_gemini_api_key_here
-```
+| Provider | Local-storage key | Proxy request header |
+| --- | --- | --- |
+| Gemini | `user_gemini_api_key` | `x-gemini-api-key` |
+| OpenAI | `user_openai_api_key` | `x-openai-api-key` |
 
-The server looks for a key in the following order:
-
-1. `x-gemini-api-key` request header
-2. `x-api-key` request header
-3. `GEMINI_API_KEY` server environment variable
-4. `API_KEY` server environment variable
-
-### Option B: Browser Local Storage
-
-A key entered through **API 키 설정** is stored in the current browser's `localStorage` under `user_gemini_api_key`. It is sent to the same-origin server in a request header. If the server API is unavailable, it may also be used by the browser-side Gemini SDK fallback.
+Only the selected provider's key is sent to the same-origin Express proxy. OpenAI keys are not stored in server environment variables, files, or databases and are used only for the current request. Gemini retains its existing `GEMINI_API_KEY` and `API_KEY` server fallback for compatibility.
 
 This keeps the key out of source code and Git history, but JavaScript running in the browser and browser developer tools can still access it. Do not use this approach on a shared computer or in a browser with untrusted extensions.
 
 ### Obtain a Key
 
-Create a Gemini API key at [Google AI Studio API Keys](https://aistudio.google.com/app/apikey). Model availability, pricing, and quotas depend on the Google account and project policy.
+- Gemini: [Google AI Studio API Keys](https://aistudio.google.com/app/apikey)
+- OpenAI: [OpenAI Platform API Keys](https://platform.openai.com/api-keys)
+
+A ChatGPT subscription and OpenAI API billing are separate. Model availability, pricing, and quotas depend on each provider's account and project policy.
 
 ## Project Structure
 
@@ -362,6 +358,7 @@ reverse-prompt-AI/
 - Node.js
 - Express
 - Google Gen AI SDK (`@google/genai`)
+- OpenAI JavaScript SDK (`openai`)
 - CORS
 - Vite middleware integration in development
 
@@ -373,16 +370,19 @@ reverse-prompt-AI/
 | Prompt enhancement | `gemini-3.6-flash` |
 | Image generation | `gemini-3.1-flash-image` |
 | Reference-image transformation and iterative editing | `gemini-3.1-flash-image` |
+| OpenAI image analysis and prompt enhancement | `gpt-5.6` |
+| OpenAI image generation and editing | `gpt-image-2` |
 
 Model names and availability may change with Google Gemini API policies. When changing a model, update both the server and browser implementations in `server.ts` and `services/geminiService.ts`.
 
 ### Request Flow
 
-1. The frontend first sends a request to a `/api/*` endpoint.
-2. The server reads a Gemini key from a request header or environment variable.
-3. If the server responds successfully, the frontend displays the result.
-4. If the server API is unavailable or does not return JSON, the client retries with the browser SDK when a locally stored user key is available.
-5. If no usable key exists, the API key settings dialog is opened.
+1. The user selects Gemini or OpenAI in the top navigation.
+2. The frontend includes `provider` in the body and sends only the selected provider's key in a request header.
+3. The server calls the selected provider and does not persist OpenAI keys.
+4. The frontend displays the server response.
+5. Gemini retains the existing browser-SDK fallback for static-hosting compatibility. OpenAI requests require the Express proxy to be running.
+6. If the selected provider has no key, the API key settings dialog opens.
 
 Image data is sent as Base64 or a Data URL. The Express request-body limit is currently `50mb`.
 
@@ -391,10 +391,10 @@ Image data is sent as Base64 or a Data URL. The Express request-body limit is cu
 | Method | Path | Purpose | Main Input |
 | --- | --- | --- | --- |
 | `GET` | `/api/health` | Check server health | None |
-| `POST` | `/api/analyze` | Run full or technical image analysis | `imageBase64`, `mimeType`, `mode`, `additionalInput` |
-| `POST` | `/api/enhance` | Enhance a prompt in English | `prompt` |
-| `POST` | `/api/generate` | Generate an image from text | `prompt`, `aspectRatio` |
-| `POST` | `/api/edit` | Generate or edit from a reference image | `imageBase64`, `prompt`, `aspectRatio` |
+| `POST` | `/api/analyze` | Run full or technical image analysis | `provider`, `imageBase64`, `mimeType`, `mode`, `additionalInput` |
+| `POST` | `/api/enhance` | Enhance a prompt in English | `provider`, `prompt` |
+| `POST` | `/api/generate` | Generate an image from text | `provider`, `prompt`, `aspectRatio` |
+| `POST` | `/api/edit` | Generate or edit from a reference image | `provider`, `imageBase64`, `prompt`, `aspectRatio` |
 
 If no API key is available, the server returns HTTP `401` with `API_KEY_REQUIRED`.
 
@@ -463,7 +463,7 @@ History currently lives only in React memory. Losing it after a page refresh is 
 
 ## Current Limitations and Important Notes
 
-- Gemini API usage and charges are applied to the Google project that owns the key.
+- Gemini and OpenAI usage and charges are applied to the project that owns the selected key.
 - Results depend on the model, account permissions, safety policies, and quota.
 - History is not persistent and lasts only for the current application session.
 - A browser-stored API key is not embedded in the source, but users or scripts that can inspect `localStorage` and request headers may access it.

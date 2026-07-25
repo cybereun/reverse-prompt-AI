@@ -2,7 +2,7 @@
 
 [한국어](README.md) | [English](README_EN.md)
 
-> 참조 이미지를 전문가급 영문 프롬프트로 역분석하고, 프롬프트 개선부터 이미지 생성·변환·후속 편집까지 한 화면에서 처리하는 Gemini 기반 AI 이미지 스튜디오입니다.
+> 참조 이미지를 전문가급 영문 프롬프트로 역분석하고, 프롬프트 개선부터 이미지 생성·변환·후속 편집까지 한 화면에서 처리하는 Gemini·OpenAI 기반 AI 이미지 스튜디오입니다.
 
 [![Developer](https://img.shields.io/badge/Developer-Lebi%20(Cybereun)-7C3AED?style=for-the-badge&logo=github&logoColor=white)](https://github.com/cybereun)
 [![Repository](https://img.shields.io/badge/GitHub-reverse--prompt--AI-181717?style=for-the-badge&logo=github)](https://github.com/cybereun/reverse-prompt-AI)
@@ -103,7 +103,8 @@
 | 다양한 화면 비율 | `16:9`, `9:16`, `1:1`, `4:3`, `3:4`, `21:9`를 지원합니다. |
 | 작업 히스토리 | 현재 브라우저 세션의 분석·생성 결과를 갤러리로 모아 보고 프롬프트를 재사용할 수 있습니다. |
 | 이미지 다운로드 | 생성 결과와 히스토리 이미지를 PNG 파일로 저장할 수 있습니다. |
-| 유연한 API 키 사용 | 서버 환경 변수 또는 사용자의 브라우저 로컬 저장소에 등록한 Gemini API 키를 사용할 수 있습니다. |
+| 멀티 AI 제공자 | 상단에서 Google Gemini와 OpenAI를 전환해 같은 작업 흐름으로 사용할 수 있습니다. |
+| 제공자별 로컬 API 키 | Gemini와 OpenAI 키를 서로 분리해 사용자의 브라우저 로컬 저장소에 보관하고 개별 삭제할 수 있습니다. |
 | 반응형 다크 UI | 데스크톱과 모바일 화면에 대응하는 스튜디오형 다크 인터페이스를 제공합니다. |
 | PWA 메타데이터 | 웹 앱 매니페스트와 앱 아이콘을 포함해 독립 실행형 웹 앱 구성을 지원합니다. |
 
@@ -178,9 +179,10 @@
 ### 처음 시작할 때
 
 1. 앱을 실행하고 브라우저에서 `http://localhost:3000`에 접속합니다.
-2. 상단의 **API 키 설정**을 누릅니다.
-3. Google AI Studio에서 발급받은 Gemini API 키를 입력하고 **로컬에 저장**을 누릅니다.
-4. 상단 표시등이 초록색으로 바뀌면 사용할 준비가 된 것입니다.
+2. 상단에서 **Gemini** 또는 **OpenAI**를 선택합니다.
+3. **API 키 설정**을 누르고 선택한 제공자의 탭을 엽니다.
+4. Google AI Studio 또는 OpenAI Platform에서 발급받은 키를 입력하고 저장합니다.
+5. 상단 표시등이 초록색으로 바뀌면 사용할 준비가 된 것입니다.
 
 서버에 `GEMINI_API_KEY`가 이미 설정되어 있다면 사용자가 브라우저에 별도 키를 등록하지 않아도 됩니다.
 
@@ -290,32 +292,27 @@ npm start
 
 ## API 키 설정
 
-Gemini API 키는 두 가지 방식으로 사용할 수 있습니다.
+Gemini와 OpenAI 키는 설정 모달에서 각각 등록하고 삭제할 수 있습니다.
 
-### 방식 A: 서버 환경 변수
+### 브라우저 로컬 저장소
 
-공용 서버나 팀 환경에서는 서버에 키를 설정하는 방식을 권장합니다.
+키는 현재 브라우저의 `localStorage`에 제공자별로 분리 보관됩니다.
 
-```env
-GEMINI_API_KEY=your_gemini_api_key_here
-```
+| 제공자 | 로컬 저장소 이름 | 프록시 요청 헤더 |
+| --- | --- | --- |
+| Gemini | `user_gemini_api_key` | `x-gemini-api-key` |
+| OpenAI | `user_openai_api_key` | `x-openai-api-key` |
 
-서버는 다음 순서로 키를 확인합니다.
-
-1. 요청 헤더의 `x-gemini-api-key`
-2. 요청 헤더의 `x-api-key`
-3. 서버 환경 변수 `GEMINI_API_KEY`
-4. 서버 환경 변수 `API_KEY`
-
-### 방식 B: 브라우저 로컬 저장소
-
-상단 **API 키 설정**에서 저장한 키는 현재 브라우저의 `localStorage`에 `user_gemini_api_key`라는 이름으로 보관됩니다. API 요청 시 같은 출처의 서버에 요청 헤더로 전달되며, 서버 API를 사용할 수 없는 환경에서는 브라우저의 Gemini SDK 호출에 사용될 수 있습니다.
+API 요청 시 선택한 제공자의 키만 같은 출처의 Express 프록시에 전달됩니다. OpenAI 키는 서버 환경 변수, 파일 또는 데이터베이스에 저장하지 않으며 현재 요청 처리에만 사용됩니다. Gemini는 기존 호환성을 위해 서버의 `GEMINI_API_KEY` 또는 `API_KEY` 폴백도 지원합니다.
 
 이 방식은 키를 소스 코드나 Git 저장소에 직접 넣지 않는다는 장점이 있지만, 브라우저에서 실행되는 JavaScript와 개발자 도구에서는 접근할 수 있습니다. 공용 PC나 신뢰할 수 없는 브라우저 확장 프로그램이 설치된 환경에서는 사용하지 마세요.
 
 ### 키 발급
 
-[Google AI Studio API Keys](https://aistudio.google.com/app/apikey)에서 Gemini API 키를 발급할 수 있습니다. 모델 사용 가능 여부, 요금 및 할당량은 사용하는 Google 계정과 프로젝트 정책에 따라 달라질 수 있습니다.
+- Gemini: [Google AI Studio API Keys](https://aistudio.google.com/app/apikey)
+- OpenAI: [OpenAI Platform API Keys](https://platform.openai.com/api-keys)
+
+ChatGPT 구독과 OpenAI API 사용량·결제는 별개입니다. 모델 사용 가능 여부, 요금 및 할당량은 각 제공자의 계정과 프로젝트 정책에 따라 달라질 수 있습니다.
 
 ## 프로젝트 구조
 
@@ -358,6 +355,7 @@ reverse-prompt-AI/
 - Node.js
 - Express
 - Google Gen AI SDK (`@google/genai`)
+- OpenAI JavaScript SDK (`openai`)
 - CORS
 - 개발 환경의 Vite 미들웨어 통합
 
@@ -369,16 +367,19 @@ reverse-prompt-AI/
 | 프롬프트 업그레이드 | `gemini-3.6-flash` |
 | 이미지 생성 | `gemini-3.1-flash-image` |
 | 참조 이미지 변환 및 후속 편집 | `gemini-3.1-flash-image` |
+| OpenAI 이미지 분석·프롬프트 개선 | `gpt-5.6` |
+| OpenAI 이미지 생성·편집 | `gpt-image-2` |
 
 모델 이름과 사용 가능 여부는 Google Gemini API 정책 변경에 따라 달라질 수 있습니다. 모델을 변경할 때는 `server.ts`와 `services/geminiService.ts`의 서버·클라이언트 구현을 함께 수정하세요.
 
 ### 요청 흐름
 
-1. 프런트엔드는 `/api/*` 엔드포인트에 먼저 요청합니다.
-2. 서버는 요청 헤더 또는 환경 변수에서 Gemini API 키를 찾습니다.
-3. 서버가 정상 응답하면 프런트엔드가 결과를 표시합니다.
-4. 서버 API가 없거나 JSON 응답을 반환하지 못하는 환경에서는, 브라우저에 저장된 사용자 키가 있을 때 클라이언트 SDK 방식으로 재시도합니다.
-5. 사용할 키가 없으면 API 키 설정 창을 엽니다.
+1. 사용자가 상단에서 Gemini 또는 OpenAI를 선택합니다.
+2. 프런트엔드는 요청 본문에 `provider`를 포함하고 선택한 키만 요청 헤더로 전달합니다.
+3. 서버는 해당 키로 선택된 제공자의 API를 호출하며 OpenAI 키는 저장하지 않습니다.
+4. 서버가 정상 응답하면 프런트엔드가 결과를 표시합니다.
+5. Gemini는 정적 호스팅 호환을 위한 기존 클라이언트 SDK 폴백을 유지합니다. OpenAI 요청에는 실행 중인 Express 프록시가 필요합니다.
+6. 선택한 제공자의 키가 없으면 API 키 설정 창을 엽니다.
 
 이미지 데이터는 Base64/Data URL 형태로 전달되며 Express 요청 본문 제한은 `50mb`입니다.
 
@@ -387,10 +388,10 @@ reverse-prompt-AI/
 | 메서드 | 경로 | 역할 | 주요 입력 |
 | --- | --- | --- | --- |
 | `GET` | `/api/health` | 서버 상태 확인 | 없음 |
-| `POST` | `/api/analyze` | 이미지 전체/기술 분석 | `imageBase64`, `mimeType`, `mode`, `additionalInput` |
-| `POST` | `/api/enhance` | 프롬프트 영문 고도화 | `prompt` |
-| `POST` | `/api/generate` | 텍스트 기반 이미지 생성 | `prompt`, `aspectRatio` |
-| `POST` | `/api/edit` | 참조 이미지 기반 생성·편집 | `imageBase64`, `prompt`, `aspectRatio` |
+| `POST` | `/api/analyze` | 이미지 전체/기술 분석 | `provider`, `imageBase64`, `mimeType`, `mode`, `additionalInput` |
+| `POST` | `/api/enhance` | 프롬프트 영문 고도화 | `provider`, `prompt` |
+| `POST` | `/api/generate` | 텍스트 기반 이미지 생성 | `provider`, `prompt`, `aspectRatio` |
+| `POST` | `/api/edit` | 참조 이미지 기반 생성·편집 | `provider`, `imageBase64`, `prompt`, `aspectRatio` |
 
 API 키가 없으면 서버는 HTTP `401`과 `API_KEY_REQUIRED` 오류를 반환합니다.
 
@@ -459,7 +460,7 @@ npm start
 
 ## 현재 동작 범위와 주의사항
 
-- Gemini API 사용량과 비용은 API 키 소유자의 Google 프로젝트에 반영됩니다.
+- Gemini와 OpenAI API 사용량 및 비용은 선택한 API 키 소유자의 프로젝트에 반영됩니다.
 - 이미지 생성 결과는 모델, 계정 권한, 안전 정책과 할당량에 따라 달라질 수 있습니다.
 - 히스토리는 영구 저장되지 않으며 현재 실행 세션에만 유지됩니다.
 - 브라우저에 저장한 API 키는 소스 코드에 포함되지는 않지만 `localStorage`와 요청 헤더를 검사할 수 있는 사용자 또는 스크립트가 접근할 수 있습니다.

@@ -1,17 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { generateImage, editImage } from '../services/geminiService';
-import { AspectRatio, ASPECT_RATIOS, HistoryItem } from '../types';
+import { AIProvider, AspectRatio, ASPECT_RATIOS, HistoryItem } from '../types';
 import { POSE_CATEGORIES } from '../data/poses';
 import { Loader2, Wand2, Download, Image as ImageIcon, RotateCcw, Sparkles, X, Camera, ChevronDown, ChevronRight, Eraser, Palette } from 'lucide-react';
 
 interface GeneratorProps {
+  provider: AIProvider;
   initialPrompt?: string;
   initialSourceImage?: string | null;
   onSaveToHistory: (item: HistoryItem) => void;
   onApiKeyRequired?: () => void;
 }
 
-const Generator: React.FC<GeneratorProps> = ({ initialPrompt = "", initialSourceImage = null, onSaveToHistory, onApiKeyRequired }) => {
+const Generator: React.FC<GeneratorProps> = ({ provider, initialPrompt = "", initialSourceImage = null, onSaveToHistory, onApiKeyRequired }) => {
   const [prompt, setPrompt] = useState(initialPrompt);
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>("16:9");
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
@@ -93,10 +94,10 @@ const Generator: React.FC<GeneratorProps> = ({ initialPrompt = "", initialSource
       let base64Image;
       // If source image exists, use it as input (Image-to-Image)
       if (sourceImage) {
-        base64Image = await editImage(sourceImage, prompt, aspectRatio);
+        base64Image = await editImage(sourceImage, prompt, aspectRatio, provider);
       } else {
         // Otherwise standard Text-to-Image
-        base64Image = await generateImage(prompt, aspectRatio);
+        base64Image = await generateImage(prompt, aspectRatio, provider);
       }
       
       setGeneratedImage(base64Image);
@@ -123,7 +124,7 @@ const Generator: React.FC<GeneratorProps> = ({ initialPrompt = "", initialSource
     if (!generatedImage || !editPrompt.trim()) return;
     setIsEditing(true);
     try {
-      const base64Image = await editImage(generatedImage, editPrompt, aspectRatio);
+      const base64Image = await editImage(generatedImage, editPrompt, aspectRatio, provider);
       setGeneratedImage(base64Image);
       onSaveToHistory({
         id: Date.now().toString(),

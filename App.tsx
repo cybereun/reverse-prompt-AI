@@ -4,9 +4,9 @@ import Generator from './components/Generator';
 import History from './components/History';
 import ApiKeyModal from './components/ApiKeyModal';
 import { AppIcon } from './components/AppIcon';
-import { HistoryItem } from './types';
-import { Camera, Zap, Layers, FolderOpen, Key } from 'lucide-react';
-import { hasStoredApiKey } from './services/apiKeyStorage';
+import { AIProvider, HistoryItem } from './types';
+import { Camera, Layers, FolderOpen, Key } from 'lucide-react';
+import { getSelectedProvider, hasStoredApiKey, setSelectedProvider } from './services/apiKeyStorage';
 
 type Tab = 'analyze' | 'generate' | 'history';
 
@@ -15,17 +15,23 @@ function App() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [sharedPrompt, setSharedPrompt] = useState<string>("");
   const [sharedSourceImage, setSharedSourceImage] = useState<string | null>(null);
+  const [provider, setProvider] = useState<AIProvider>(() => getSelectedProvider());
   
   // API Key Modal State
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
   const [isKeySetLocally, setIsKeySetLocally] = useState(false);
 
   useEffect(() => {
-    setIsKeySetLocally(hasStoredApiKey());
-  }, []);
+    setIsKeySetLocally(hasStoredApiKey(provider));
+  }, [provider]);
 
   const handleKeyUpdated = () => {
-    setIsKeySetLocally(hasStoredApiKey());
+    setIsKeySetLocally(hasStoredApiKey(provider));
+  };
+
+  const handleProviderChange = (nextProvider: AIProvider) => {
+    setProvider(nextProvider);
+    setSelectedProvider(nextProvider);
   };
 
   const addToHistory = (item: HistoryItem) => {
@@ -78,6 +84,29 @@ function App() {
                 })}
               </div>
 
+              {/* AI Provider Selector */}
+              <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg p-1">
+                {([
+                  { id: 'gemini', label: 'Gemini' },
+                  { id: 'openai', label: 'OpenAI' }
+                ] as const).map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => handleProviderChange(item.id)}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
+                      provider === item.id
+                        ? item.id === 'openai'
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-blue-600 text-white'
+                        : 'text-zinc-500 hover:text-zinc-200'
+                    }`}
+                    title={`${item.label} 사용`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
               {/* API Key Settings Button */}
               <button
                 onClick={() => setIsApiKeyModalOpen(true)}
@@ -86,9 +115,9 @@ function App() {
                     ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/40'
                     : 'bg-zinc-800/80 border-zinc-700 text-zinc-300 hover:bg-zinc-800'
                 }`}
-                title="Gemini API 키 설정 (로컬 저장)"
+                title={`${provider === 'openai' ? 'OpenAI' : 'Gemini'} API 키 설정 (로컬 저장)`}
               >
-                <Key className="w-3.5 h-3.5 text-blue-400" />
+                <Key className={`w-3.5 h-3.5 ${provider === 'openai' ? 'text-emerald-400' : 'text-blue-400'}`} />
                 <span className="hidden md:inline">API 키 설정</span>
                 <span className={`w-2 h-2 rounded-full ${isKeySetLocally ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'}`} />
               </button>
@@ -109,6 +138,7 @@ function App() {
               </div>
             </div>
             <Analyzer 
+              provider={provider}
               onPromptGenerated={handlePromptGenerated} 
               onSaveToHistory={addToHistory}
               onApiKeyRequired={() => setIsApiKeyModalOpen(true)}
@@ -122,8 +152,9 @@ function App() {
                  <h1 className="text-3xl font-bold text-white">역프롬프트 이미지 생성 AI</h1>
                  <p className="text-zinc-400 text-sm mt-0.5">최적화된 프롬프트로 놀라운 예술 작품을 만들어보세요.</p>
                </div>
-             </div>
+            </div>
             <Generator 
+              provider={provider}
               initialPrompt={sharedPrompt} 
               initialSourceImage={sharedSourceImage}
               onSaveToHistory={addToHistory}
@@ -147,6 +178,7 @@ function App() {
       {/* API Key Modal */}
       <ApiKeyModal
         isOpen={isApiKeyModalOpen}
+        initialProvider={provider}
         onClose={() => setIsApiKeyModalOpen(false)}
         onKeyUpdated={handleKeyUpdated}
       />
@@ -154,7 +186,7 @@ function App() {
       {/* Footer */}
       <footer className="border-t border-zinc-900 py-6 text-center">
         <p className="text-xs text-zinc-600">
-          Powered by Google Gemini Models • Server-Side API Proxy for Security
+          Powered by Google Gemini & OpenAI • Server-Side API Proxy
         </p>
       </footer>
     </div>
